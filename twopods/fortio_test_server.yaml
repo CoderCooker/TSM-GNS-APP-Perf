@@ -1,0 +1,140 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortioserver
+  namespace: fortioserver
+spec:
+  ports:
+  - name: http-echo
+    port: 8080
+    protocol: TCP
+  - name: grpc-ping
+    port: 8079
+    protocol: TCP
+  - name: tcp-echo
+    port: 8078
+    protocol: TCP
+  - name: http-echoa
+    port: 8077
+    protocol: TCP
+  - name: grpc-pinga
+    port: 8076
+    protocol: TCP
+  - name: nighthawk-service
+    port: 9999
+    protocol: TCP
+  - name: fortio-reporting
+    port: 9076
+    protocol: TCP
+  selector:
+    app: fortioserver
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fortioserver
+  name: fortioserver
+  namespace: fortioserver
+spec:
+  replicas: 7
+  selector:
+    matchLabels:
+      app: fortioserver
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: "disabled"
+      labels:
+        app: fortioserver
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - "fortioclient"
+            topologyKey: "kubernetes.io/hostname"
+      volumes:
+      - name: shared-data
+        emptyDir: {}
+      containers:
+      - name: captured
+        securityContext:
+          runAsUser: 1
+        volumeMounts:
+        - name: shared-data
+          mountPath: /var/lib/fortio
+        image:  fortio/fortio:latest_release
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 8079
+          protocol: TCP
+        - containerPort: 8078
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 1500m
+            memory: 1000Mi
+      - name: shell
+        securityContext:
+          runAsUser: 1
+        volumeMounts:
+        - name: shared-data
+          mountPath: /var/lib/fortio
+        image: tutum/curl:trusty
+        args:
+        - /bin/sleep
+        - infinity
+      - name: uncaptured
+        securityContext:
+          runAsUser: 1
+        image: fortio/fortio:latest_release
+        args:
+        - server
+        - -http-port
+        - "8077"
+        - -grpc-port
+        - "8076"
+        - -tcp-port
+        - "8078"
+        - -redirect-port
+        - "8081"
+        resources:
+          requests:
+            cpu: 1500m
+            memory: 1000Mi
+---
+# Source: benchmark/templates/mtls.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: fortioserver
+  namespace: fortioserver
+spec:
+  host:  fortioserver
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: 8080
+      tls:
+        mode: ISTIO_MUTUAL
+    - port:
+        number: 8077
+      tls:
+        mode: DISABLE
+---
+# Source: benchmark/templates/mtls.yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: fortioserver
+spec:
+  mtls:
+    mode: PERMISSIVE
