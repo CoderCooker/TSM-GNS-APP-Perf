@@ -6,19 +6,21 @@ Install Istio
 install prometheus step by step https://devopscube.com/setup-prometheus-monitoring-on-kubernetes/
 git clone https://github.com/istio/tools.git
 
-export NAMESPACE=fortioclient
-k create ns $NAMESPACE
-export DNS_DOMAIN=local
-cd tools/perf/benchmark
-setup_test.sh
+kubernetes create ns fortioclient
+kubernetes create ns fortioserver
+kubernetes -n fortioclient -f twopods/fortio_test_client.yaml
+kubernetes -n fortioserver -f twopods/fortio_test_server.yaml
 
 # Prepare Python Environment #
+cd tools/perf/benchmark
 cd runner
 pipenv shell
 pipenv install
 cd ..
 
 # Run performance tests #
+export NAMESPACE=fortioclient
+export DNS_DOMAIN=local
 python3 ./runner/runner.py --conn 1,2,4,8,16,32,64 --qps 1000 --duration 240 --baseline --telemetry_mode telemetryv2
 python3 ./runner/runner.py --conn 16 --qps 100,200,400,800,1000 --duration 240 --baseline --telemetry_mode telemetryv2
 
