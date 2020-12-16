@@ -31,9 +31,9 @@ python3 ./runner/fortio.py $FORTIO_CLIENT_URL --prometheus=$PROMETHEUS_URL --csv
 
 # Visualize Results #
 cd graph_plotter/
-python3 ./graph_plotter.py --graph_type=latency-p999 --x_axis=conn --telemetry_modes=telemetryv2_both,telemetryv2_baseline --query_list=1,2,4,8,16,32,64 --query_str=ActualQPS==1000 --csv_filepath=/Users/hjimin/Documents/TSM/Scalabilities/istio_performance/1215/250PODS-GNS-SC/istio173/latency_vs_conn/250PODS_SC.csv --graph_title=/Users/hjimin/Documents/TSM/Scalabilities/istio_performance/AS-8-18/250PODS/SC/p999.png
+python3 ./graph_plotter.py --graph_type=latency-p999 --x_axis=conn --telemetry_modes=telemetryv2_both,telemetryv2_baseline --query_list=1,2,4,8,16,32,64 --query_str=ActualQPS==1000 --csv_filepath=250PODS_SC.csv --graph_title=p999.png
 
-python3 ./graph_plotter.py --graph_type=ingressgateway-cpu --x_axis=qps --telemetry_modes=telemetryv2_both,telemetryv2_baseline --query_list=10,100,200,400,800,1000 --query_str=NumThreads==16 --csv_filepath=/Users/hjimin/Documents/TSM/Scalabilities/istio_performance/1215/250PODS-GNS-SC/istio173/latency_vs_conn/250PODS_SC.csv --graph_title=/Users/hjimin/Documents/TSM/Scalabilities/istio_performance/AS-8-18/250PODS/SC/cpu.png
+python3 ./graph_plotter.py --graph_type=ingressgateway-cpu --x_axis=qps --telemetry_modes=telemetryv2_both,telemetryv2_baseline --query_list=10,100,200,400,800,1000 --query_str=NumThreads==16 --csv_filepath=250PODS_SC.csv --graph_title=cpu.png
 
 
 
