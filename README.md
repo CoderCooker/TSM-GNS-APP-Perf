@@ -8,8 +8,8 @@ git clone https://github.com/istio/tools.git
 
 kubernetes create ns fortioclient    
 kubernetes create ns fortioserver  
-kubernetes -n fortioclient -f twopods/fortio_test_client.yaml  
-kubernetes -n fortioserver -f twopods/fortio_test_server.yaml  
+kubernetes -n fortioclient apply -f twopods/fortio_test_client.yaml  
+kubernetes -n fortioserver apply -f twopods/fortio_test_server.yaml  
 
 # Prepare Python Environment #
 cd tools/perf/benchmark  
