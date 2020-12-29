@@ -38,7 +38,7 @@ metadata:
   name: fortioserver
   namespace: fortioserver
 spec:
-  replicas: 7
+  replicas: 1
   selector:
     matchLabels:
       app: fortioserver
