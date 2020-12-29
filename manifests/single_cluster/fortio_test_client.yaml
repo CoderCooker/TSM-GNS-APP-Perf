@@ -1,0 +1,134 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fortioclient
+  name: fortioclient
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fortioclient
+  template:
+    metadata:
+      labels:
+        app: fortioclient
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - "fortioserver"
+            topologyKey: "kubernetes.io/hostname"
+      volumes:
+      - name: shared-data
+        emptyDir: {}
+      containers:
+      - name: captured
+        securityContext:
+          runAsUser: 1
+        volumeMounts:
+        - name: shared-data
+          mountPath: /var/lib/fortio
+        image:  fortio/fortio:latest_release
+        args:
+        - report
+        resources:
+          requests:
+            cpu: 1500m
+            memory: 1000Mi
+      - name: shell
+        securityContext:
+          runAsUser: 1
+        volumeMounts:
+        - name: shared-data
+          mountPath: /var/lib/fortio
+        image: tutum/curl:trusty
+        args:
+        - /bin/sleep
+        - infinity
+      - name: uncaptured
+        securityContext:
+          runAsUser: 1
+        image: fortio/fortio:latest_release
+        args:
+        - report
+        - -http-port
+        - "8077"
+        - -grpc-port
+        - "8076"
+        - -redirect-port
+        - "8081"
+        - -tcp-port
+        - "8078"
+        resources:
+          requests:
+            cpu: 1500m
+            memory: 1000Mi
+---
+# Source: benchmark/templates/fortio.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortioclient
+  namespace: fortioclient
+spec:
+  ports:
+  - name: http-echo
+    port: 8080
+    protocol: TCP
+  - name: grpc-ping
+    port: 8079
+    protocol: TCP
+  - name: tcp-echo
+    port: 8078
+    protocol: TCP
+  - name: http-echoa
+    port: 8077
+    protocol: TCP
+  - name: grpc-pinga
+    port: 8076
+    protocol: TCP
+  - name: nighthawk-service
+    port: 9999
+    protocol: TCP
+  - name: fortio-reporting
+    port: 9076
+    protocol: TCP
+  selector:
+    app: fortioclient
+  type: LoadBalancer
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: fortioserver
+  namespace: fortioclient
+spec:
+  hosts:
+  - fortioserver.gns-2ns-sc.local
+  http:
+  - timeout: 3s
+    route:
+    - destination:
+        host: fortioserver.gns-2ns-sc.local
+      weight: 100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: fortioclient
+  namespace: fortioclient
+spec:
+  egress:
+  - hosts:
+    - fortioserver/*
+    - fortioclient/*
+  workloadSelector:
+    labels:
+      app: fortioclient
