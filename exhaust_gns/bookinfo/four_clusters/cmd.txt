@@ -1,0 +1,1 @@
+kubectl --context arn:aws:eks:us-west-2:284299419820:cluster/jm-248-cl1-dev-st -n scale-gns-cluster1-ns exec -it sleep-f8cbf5b76-hp9xf -c sleep -- sh -c 'curl http://productpage.cc-scale-gns.com:9080/productpage'
