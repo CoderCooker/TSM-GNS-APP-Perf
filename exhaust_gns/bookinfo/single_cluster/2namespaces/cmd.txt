@@ -1,0 +1,1 @@
+kubectl -n fix-me-2ns-a exec -it sleep-6bdb595bcb-wpv7w -c sleep -- sh -c 'curl http://productpage.sc-2ns-bookinfo.com:9080/productpage | grep 'Book Details''

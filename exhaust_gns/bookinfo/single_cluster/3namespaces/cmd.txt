@@ -1,0 +1,1 @@
+kubectl -n fix-me-3ns-a exec -it sleep-6bdb595bcb-p4jhv -c sleep -- sh -c 'curl http://productpage.sc-3ns-bookinfo.com:9080/productpage' 
